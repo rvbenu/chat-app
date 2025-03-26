@@ -1,0 +1,96 @@
+syntax = "proto3";
+
+package chat;
+
+service ChatService {
+  // Authentication
+  rpc Register (RegisterRequest) returns (AuthResponse);
+  rpc Login (LoginRequest) returns (AuthResponse);
+  rpc DeleteAccount (DeleteAccountRequest) returns (StatusResponse);
+  
+  // Messaging
+  rpc SendMessage (SendMessageRequest) returns (StatusResponse);
+  rpc GetMessages (GetMessagesRequest) returns (MessageList);
+  rpc DeleteMessage (DeleteMessageRequest) returns (StatusResponse);
+  
+  // Connection management
+  rpc Connect (ConnectRequest) returns (stream ChatEvent);
+  rpc Disconnect (DisconnectRequest) returns (StatusResponse);
+}
+
+message RegisterRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message LoginRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message AuthResponse {
+  bool success = 1;
+  string message = 2;
+  string session_token = 3;
+}
+
+message DeleteAccountRequest {
+  string session_token = 1;
+}
+
+message SendMessageRequest {
+  string session_token = 1;
+  string recipient = 2;
+  string content = 3;
+}
+
+message GetMessagesRequest {
+  string session_token = 1;
+  string peer_username = 2;
+  int32 last_n_messages = 3;  // Number of messages to fetch, 0 means all
+}
+
+message DeleteMessageRequest {
+  string session_token = 1;
+  string message_id = 2;
+}
+
+message ConnectRequest {
+  string session_token = 1;
+}
+
+message DisconnectRequest {
+  string session_token = 1;
+}
+
+message StatusResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message Message {
+  string id = 1;
+  string sender = 2;
+  string recipient = 3;
+  string content = 4;
+  int64 timestamp = 5;
+  bool read = 6;
+}
+
+message MessageList {
+  repeated Message messages = 1;
+}
+
+message ChatEvent {
+  enum EventType {
+    NEW_MESSAGE = 0;
+    USER_ONLINE = 1;
+    USER_OFFLINE = 2;
+    MESSAGE_DELETED = 3;
+  }
+  
+  EventType type = 1;
+  Message message = 2;
+  string username = 3;
+  string message_id = 4;
+}
