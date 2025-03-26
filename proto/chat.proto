@@ -3,94 +3,44 @@ syntax = "proto3";
 package chat;
 
 service ChatService {
-  // Authentication
-  rpc Register (RegisterRequest) returns (AuthResponse);
-  rpc Login (LoginRequest) returns (AuthResponse);
-  rpc DeleteAccount (DeleteAccountRequest) returns (StatusResponse);
+  // User authentication and registration
+  rpc Register(RegisterRequest) returns (AuthResponse) {}
+  rpc Login(LoginRequest) returns (AuthResponse) {}
   
-  // Messaging
-  rpc SendMessage (SendMessageRequest) returns (StatusResponse);
-  rpc GetMessages (GetMessagesRequest) returns (MessageList);
-  rpc DeleteMessage (DeleteMessageRequest) returns (StatusResponse);
-  
-  // Connection management
-  rpc Connect (ConnectRequest) returns (stream ChatEvent);
-  rpc Disconnect (DisconnectRequest) returns (StatusResponse);
+  // Message operations
+  rpc SendMessage(Message) returns (SendResponse) {}
+  rpc GetMessages(GetMessagesRequest) returns (stream Message) {}
 }
 
 message RegisterRequest {
   string username = 1;
-  string password = 2;
+  string password = 2; // Will be hashed on client side
 }
 
 message LoginRequest {
   string username = 1;
-  string password = 2;
+  string password = 2; // Will be hashed on client side
 }
 
 message AuthResponse {
   bool success = 1;
-  string message = 2;
-  string session_token = 3;
-}
-
-message DeleteAccountRequest {
-  string session_token = 1;
-}
-
-message SendMessageRequest {
-  string session_token = 1;
-  string recipient = 2;
-  string content = 3;
-}
-
-message GetMessagesRequest {
-  string session_token = 1;
-  string peer_username = 2;
-  int32 last_n_messages = 3;  // Number of messages to fetch, 0 means all
-}
-
-message DeleteMessageRequest {
-  string session_token = 1;
-  string message_id = 2;
-}
-
-message ConnectRequest {
-  string session_token = 1;
-}
-
-message DisconnectRequest {
-  string session_token = 1;
-}
-
-message StatusResponse {
-  bool success = 1;
-  string message = 2;
+  string token = 2; // Session token for authenticated requests
+  string error_message = 3; // Error message if any
 }
 
 message Message {
-  string id = 1;
-  string sender = 2;
-  string recipient = 3;
-  string content = 4;
-  int64 timestamp = 5;
-  bool read = 6;
+  string sender = 1;
+  string content = 2;
+  int64 timestamp = 3;
+  string token = 4; // Session token for authentication
 }
 
-message MessageList {
-  repeated Message messages = 1;
+message SendResponse {
+  bool success = 1;
+  string error_message = 2;
 }
 
-message ChatEvent {
-  enum EventType {
-    NEW_MESSAGE = 0;
-    USER_ONLINE = 1;
-    USER_OFFLINE = 2;
-    MESSAGE_DELETED = 3;
-  }
-  
-  EventType type = 1;
-  Message message = 2;
-  string username = 3;
-  string message_id = 4;
+message GetMessagesRequest {
+  int64 since_timestamp = 1; // Get messages newer than this timestamp
+  string token = 2; // Session token for authentication
 }
